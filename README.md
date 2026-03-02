@@ -9,76 +9,81 @@
     <img src="https://img.shields.io/docker/pulls/vimapix/vimapix?style=for-the-badge&logo=docker&label=Pulls" alt="Docker Pulls">
   </a>
   <a href="https://github.com/reisdiegoss/vimapix/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="Licença: MIT">
+    <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="Licenï¿½a: MIT">
   </a>
   <a href="https://vimapix.dominio.com.br">
     <img src="https://img.shields.io/badge/Site-Acessar-blue?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Acessar o Site">
   </a>
 </p>
 
-**VimaPIX** é uma aplicação Node.js completa que oferece uma interface web e uma API RESTful para gerar dinamicamente QR Codes e payloads "Copia e Cola" para transações PIX, seguindo as especificações do Banco Central do Brasil.
+**VimaPIX** ï¿½ uma aplicaï¿½ï¿½o Node.js completa que oferece uma interface web e uma API RESTful para gerar dinamicamente QR Codes e payloads "Copia e Cola" para transaï¿½ï¿½es PIX, seguindo as especificaï¿½ï¿½es do Banco Central do Brasil.
 
 ---
 
 ## ? Funcionalidades
 
 - **Interface Web Intuitiva:** Um frontend simples para preencher os dados e gerar o PIX visualmente.
-- **API RESTful Robusta:** Um endpoint `/api/generate` para integrações, permitindo que outros sistemas gerem códigos PIX.
-- **Geração de QR Code:** Retorna a imagem do QR Code em formato Base64.
-- **Payload "Copia e Cola":** Retorna o payload (BR Code) completo para transações.
-- **Sem Dependências Externas:** A lógica de geração do PIX é totalmente contida na aplicação.
-- **Pronto para Orquestração:** Inclui exemplos para rodar com Docker Swarm e Traefik como proxy reverso.
+- **API RESTful Robusta:** Um endpoint `/api/generate` para integraï¿½ï¿½es, permitindo que outros sistemas gerem cï¿½digos PIX.
+- **Geraï¿½ï¿½o de QR Code:** Retorna a imagem do QR Code em formato Base64.
+- **Payload "Copia e Cola":** Retorna o payload (BR Code) completo para transaï¿½ï¿½es.
+- **Sem Dependï¿½ncias Externas:** A lï¿½gica de geraï¿½ï¿½o do PIX ï¿½ totalmente contida na aplicaï¿½ï¿½o.
+- **Pronto para Orquestraï¿½ï¿½o:** Inclui exemplos para rodar com Docker Swarm e Traefik como proxy reverso.
 
 ---
 
 ## ?? Como Usar
 
-### 1. Pré-requisitos
+### 1. Prï¿½-requisitos
 
 - [Node.js](https://nodejs.org/) (v18 ou superior)
-- [Docker](https://www.docker.com/) (para rodar em contêiner)
+- [Docker](https://www.docker.com/) (para rodar em contï¿½iner)
 
 ### 2. Rodando Localmente (Para Desenvolvimento)
 
-Primeiro, clone o repositório:
+Primeiro, clone o repositï¿½rio:
+
 ```bash
-git clone [https://github.com/reisdiegoss/vimapix.git](https://github.com/reisdiegoss/vimapix.git)
-cd VimaPIX
+git clone https://github.com/reisdiegoss/vimapix.git
+cd vimapix
 ```
 
-Instale as dependências:
+Instale as dependï¿½ncias:
+
 ```bash
 npm install
 ```
 
 Inicie o servidor de desenvolvimento:
+
 ```bash
 npm start
 ```
-A aplicação estará disponível em `http://localhost:3000`.
+
+A aplicaï¿½ï¿½o estarï¿½ disponï¿½vel em `http://localhost:3000`.
 
 ### 3. Executando com Docker
 
-Para rodar a aplicação de forma simples usando a imagem do Docker Hub:
+Para rodar a aplicaï¿½ï¿½o de forma simples usando a imagem do Docker Hub:
 
 ```bash
-docker run -d -p 3000:3000 --name VimaPIX vimapix/vimapix:latest
+docker run -d -p 3000:3000 --name VimaPIX vimasistemas/vimapix:latest
 ```
-Após executar o comando, acesse `http://localhost:3000` no seu navegador.
+
+Apï¿½s executar o comando, acesse `http://localhost:3000` no seu navegador.
 
 ### 4. Executando com Docker Swarm e Traefik
 
-Esta é a forma recomendada para ambientes de produção, utilizando o Traefik como proxy reverso para gerenciar o tráfego e os certificados SSL.
+Esta ï¿½ a forma recomendada para ambientes de produï¿½ï¿½o, utilizando o Traefik como proxy reverso para gerenciar o trï¿½fego e os certificados SSL.
 
-Crie um arquivo `docker-stack.yml` com o conteúdo abaixo:
+Crie um arquivo `docker-stack.yml` com o conteï¿½do abaixo:
 
 ```yaml
 version: "3.8"
 
 services:
   VimaPIX:
-    image: vimapix/vimapix:latest
-    hostname: VimaPIX
+    image: vimasistemas/vimapix:latest
+    hostname: vimapix
     networks:
       - network_public
     deploy:
@@ -92,47 +97,52 @@ services:
           cpus: '0.5'
           memory: 1024M
       labels:
-        # --- Configurações do Traefik ---
+        # --- Configuraï¿½ï¿½es do Traefik ---
         - "traefik.enable=true"
         - "traefik.docker.network=network_public"
-        # Roteador HTTP para o domínio
-        - "traefik.http.routers.VimaPIX.rule=Host(`VimaPIX.dominio.com.br`)"
-        - "traefik.http.routers.VimaPIX.entrypoints=websecure"
-        - "traefik.http.routers.VimaPIX.service=VimaPIX-svc"
-        # Configurações de TLS/SSL com Let's Encrypt
-        - "traefik.http.routers.VimaPIX.tls=true"
-        - "traefik.http.routers.VimaPIX.tls.certresolver=letsencryptresolver"
-        # Definição do serviço e porta da aplicação
-        - "traefik.http.services.VimaPIX-svc.loadbalancer.server.port=3000"
+        # Roteador HTTP para o domï¿½nio
+        - "traefik.http.routers.vimapix.rule=Host(`vimapix.dominio.com.br`)"
+        - "traefik.http.routers.vimapix.entrypoints=websecure"
+        - "traefik.http.routers.vimapix.service=vimapix-svc"
+        # Configuraï¿½ï¿½es de TLS/SSL com Let's Encrypt
+        - "traefik.http.routers.vimapix.tls=true"
+        - "traefik.http.routers.vimapix.tls.certresolver=letsencryptresolver"
+        # Definiï¿½ï¿½o do serviï¿½o e porta da aplicaï¿½ï¿½o
+        - "traefik.http.services.vimapix-svc.loadbalancer.server.port=3000"
 
 networks:
   network_public:
     external: true
 ```
 
-**Pré-requisitos para o Swarm:**
-- Você precisa ter uma instância do Traefik rodando e conectada à rede `network_public`.
+**Prï¿½-requisitos para o Swarm:**
+
+- Vocï¿½ precisa ter uma instï¿½ncia do Traefik rodando e conectada ï¿½ rede `network_public`.
 - A rede `network_public` deve ser do tipo `overlay` e ter sido criada previamente.
-- Altere `VimaPIX.dominio.com.br` para o seu domínio real.
+- Altere `vimapix.dominio.com.br` para o seu domï¿½nio real.
 
 Para implantar a stack, execute:
+
 ```bash
-docker stack deploy -c docker-stack.yml VimaPIX
+docker stack deploy -c docker-stack.yml vimapix
 ```
-Após a implantação, acesse `https://VimaPIX.dominio.com.br` no seu navegador.
+
+Apï¿½s a implantaï¿½ï¿½o, acesse `https://vimapix.dominio.com.br` no seu navegador.
 
 ---
 
 ## ?? API Endpoint
 
-A aplicação expõe um endpoint principal para a geração do PIX.
+A aplicaï¿½ï¿½o expï¿½e um endpoint principal para a geraï¿½ï¿½o do PIX.
 
 ### `POST /api/generate`
+
 Gera o BR Code e o QR Code em Base64.
 
-**Exemplo de requisição com `curl`:**
+**Exemplo de requisiï¿½ï¿½o com `curl`:**
+
 ```bash
-curl -X POST [https://VimaPIX.dominio.com.br/api/generate](https://VimaPIX.dominio.com.br/api/generate) \
+curl -X POST https://vimapix.dominio.com.br/api/generate \
 -H "Content-Type: application/json" \
 -d '{
   "pixKey": "seu-email@provedor.com",
@@ -144,6 +154,7 @@ curl -X POST [https://VimaPIX.dominio.com.br/api/generate](https://VimaPIX.domin
 ```
 
 **Exemplo de resposta (Sucesso `200 OK`):**
+
 ```json
 {
   "brcode": "00020126580014BR.GOV.BCB.PIX...",
@@ -154,17 +165,18 @@ curl -X POST [https://VimaPIX.dominio.com.br/api/generate](https://VimaPIX.domin
 ---
 
 ## ??? Dockerfile
-A imagem é construída utilizando um processo multi-stage para otimização, resultando em uma imagem final leve e segura.
+
+A imagem ï¿½ construï¿½da utilizando um processo multi-stage para otimizaï¿½ï¿½o, resultando em uma imagem final leve e segura.
 
 ```dockerfile
-# Etapa 1: Base da Construção
+# Etapa 1: Base da Construï¿½ï¿½o
 FROM node:18-alpine AS builder
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install --only=production
 COPY . .
 
-# Etapa 2: Imagem Final de Produção
+# Etapa 2: Imagem Final de Produï¿½ï¿½o
 FROM node:18-alpine
 WORKDIR /usr/src/app
 COPY --from=builder /usr/src/app .
@@ -177,8 +189,8 @@ CMD [ "node", "server.js" ]
 
 ## ?? Contribuindo
 
-Contribuições são bem-vindas! Sinta-se à vontade para abrir uma *issue* ou enviar um *pull request*.
+Contribuiï¿½ï¿½es sï¿½o bem-vindas! Sinta-se ï¿½ vontade para abrir uma *issue* ou enviar um *pull request*.
 
-## ?? Licença
+## ?? Licenï¿½a
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Este projeto estï¿½ sob a licenï¿½a MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
