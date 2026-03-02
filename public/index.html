@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="VimaPIX - Gerador gratuito de QR Code e Payload PIX. Gere, valide e baixe QR Codes para transações PIX.">
+    <meta name="description"
+        content="VimaPIX - Gerador gratuito de QR Code e Payload PIX. Gere, valide e baixe QR Codes para transações PIX.">
     <title>VimaPIX - Gerador de QR Code PIX</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="app-container">
 
@@ -58,13 +61,15 @@
 
                     <div class="form-group">
                         <label class="form-label" for="beneficiaryName">Nome do Beneficiário</label>
-                        <input class="form-input" type="text" id="beneficiaryName" placeholder="SEU NOME COMPLETO" style="text-transform: uppercase" required>
+                        <input class="form-input" type="text" id="beneficiaryName" placeholder="SEU NOME COMPLETO"
+                            style="text-transform: uppercase" required>
                         <p class="form-error" id="nameError">Nome é obrigatório</p>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="beneficiaryCity">Cidade do Beneficiário</label>
-                        <input class="form-input" type="text" id="beneficiaryCity" placeholder="SAO PAULO" value="SAO PAULO" style="text-transform: uppercase" required>
+                        <input class="form-input" type="text" id="beneficiaryCity" placeholder="SAO PAULO"
+                            value="SAO PAULO" style="text-transform: uppercase" required>
                     </div>
 
                     <div class="form-row">
@@ -74,7 +79,8 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="txid">TXID (Opcional)</label>
-                            <input class="form-input" type="text" id="txid" placeholder="Código da transferência" maxlength="25">
+                            <input class="form-input" type="text" id="txid" placeholder="Código da transferência"
+                                maxlength="25">
                         </div>
                     </div>
 
@@ -136,7 +142,8 @@
                 <!-- Placeholder when no result -->
                 <div id="placeholder" style="text-align: center; padding: 3rem 1rem;">
                     <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.3;">📱</div>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">Preencha os dados e clique em<br><strong>"Gerar QR Code"</strong> para visualizar</p>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Preencha os dados e clique
+                        em<br><strong>"Gerar QR Code"</strong> para visualizar</p>
                 </div>
 
                 <!-- Validate Section -->
@@ -146,7 +153,9 @@
                         Validar BR Code
                     </h3>
                     <div class="form-group">
-                        <textarea class="form-input" id="validateInput" rows="3" placeholder="Cole aqui um payload BR Code para validar..." style="resize: vertical; font-family: 'Courier New', monospace; font-size: 0.8rem;"></textarea>
+                        <textarea class="form-input" id="validateInput" rows="3"
+                            placeholder="Cole aqui um payload BR Code para validar..."
+                            style="resize: vertical; font-family: 'Courier New', monospace; font-size: 0.8rem;"></textarea>
                     </div>
                     <button class="btn btn-secondary btn-sm" id="validateBtn" style="width: 100%;">🔍 Validar</button>
 
@@ -168,432 +177,450 @@
     </div>
 
     <script>
-    // === VimaPIX Frontend Logic ===
+        // === VimaPIX Frontend Logic ===
 
-    // --- DOM Elements ---
-    const form = document.getElementById('pixForm');
-    const keyType = document.getElementById('keyType');
-    const pixType = document.getElementById('pixType');
-    const pixKey = document.getElementById('pixKey');
-    const beneficiaryName = document.getElementById('beneficiaryName');
-    const beneficiaryCity = document.getElementById('beneficiaryCity');
-    const amount = document.getElementById('amount');
-    const txid = document.getElementById('txid');
-    const qrFormat = document.getElementById('qrFormat');
-    const submitBtn = document.getElementById('submitBtn');
-    const resultArea = document.getElementById('resultArea');
-    const placeholder = document.getElementById('placeholder');
-    const qrContainer = document.getElementById('qrContainer');
-    const brcodeText = document.getElementById('brcodeText');
-    const copyBtn = document.getElementById('copyBtn');
-    const copyFeedback = document.getElementById('copyFeedback');
-    const downloadPngBtn = document.getElementById('downloadPngBtn');
-    const downloadSvgBtn = document.getElementById('downloadSvgBtn');
-    const validateInput = document.getElementById('validateInput');
-    const validateBtn = document.getElementById('validateBtn');
-    const validateResult = document.getElementById('validateResult');
-    const validateTable = document.getElementById('validateTable');
-    const historyList = document.getElementById('historyList');
-    const clearHistory = document.getElementById('clearHistory');
+        // --- DOM Elements ---
+        const form = document.getElementById('pixForm');
+        const keyType = document.getElementById('keyType');
+        const pixType = document.getElementById('pixType');
+        const pixKey = document.getElementById('pixKey');
+        const beneficiaryName = document.getElementById('beneficiaryName');
+        const beneficiaryCity = document.getElementById('beneficiaryCity');
+        const amount = document.getElementById('amount');
+        const txid = document.getElementById('txid');
+        const qrFormat = document.getElementById('qrFormat');
+        const submitBtn = document.getElementById('submitBtn');
+        const resultArea = document.getElementById('resultArea');
+        const placeholder = document.getElementById('placeholder');
+        const qrContainer = document.getElementById('qrContainer');
+        const brcodeText = document.getElementById('brcodeText');
+        const copyBtn = document.getElementById('copyBtn');
+        const copyFeedback = document.getElementById('copyFeedback');
+        const downloadPngBtn = document.getElementById('downloadPngBtn');
+        const downloadSvgBtn = document.getElementById('downloadSvgBtn');
+        const validateInput = document.getElementById('validateInput');
+        const validateBtn = document.getElementById('validateBtn');
+        const validateResult = document.getElementById('validateResult');
+        const validateTable = document.getElementById('validateTable');
+        const historyList = document.getElementById('historyList');
+        const clearHistory = document.getElementById('clearHistory');
 
-    let lastGeneratedData = null;
-    let debounceTimer = null;
+        let lastGeneratedData = null;
+        let debounceTimer = null;
 
-    // --- 1C: Validação e Máscaras ---
-    const masks = {
-        cpf: (v) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2').substring(0, 14),
-        cnpj: (v) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1/$2').replace(/(\d{4})(\d{1,2})$/, '$1-$2').substring(0, 18),
-        phone: (v) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d{1,4})$/, '$1-$2').substring(0, 15),
-    };
+        // --- 1C: Validação e Máscaras ---
+        const masks = {
+            cpf: (v) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2').substring(0, 14),
+            cnpj: (v) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1/$2').replace(/(\d{4})(\d{1,2})$/, '$1-$2').substring(0, 18),
+            phone: (v) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d{1,4})$/, '$1-$2').substring(0, 15),
+        };
 
-    const validators = {
-        cpf: (v) => {
-            const nums = v.replace(/\D/g, '');
-            if (nums.length !== 11) return false;
-            if (/^(\d)\1+$/.test(nums)) return false;
-            let sum = 0;
-            for (let i = 0; i < 9; i++) sum += parseInt(nums[i]) * (10 - i);
-            let d1 = 11 - (sum % 11); d1 = d1 >= 10 ? 0 : d1;
-            if (parseInt(nums[9]) !== d1) return false;
-            sum = 0;
-            for (let i = 0; i < 10; i++) sum += parseInt(nums[i]) * (11 - i);
-            let d2 = 11 - (sum % 11); d2 = d2 >= 10 ? 0 : d2;
-            return parseInt(nums[10]) === d2;
-        },
-        cnpj: (v) => {
-            const nums = v.replace(/\D/g, '');
-            if (nums.length !== 14) return false;
-            const weights1 = [5,4,3,2,9,8,7,6,5,4,3,2];
-            const weights2 = [6,5,4,3,2,9,8,7,6,5,4,3,2];
-            let sum = 0;
-            for (let i = 0; i < 12; i++) sum += parseInt(nums[i]) * weights1[i];
-            let d1 = sum % 11 < 2 ? 0 : 11 - (sum % 11);
-            if (parseInt(nums[12]) !== d1) return false;
-            sum = 0;
-            for (let i = 0; i < 13; i++) sum += parseInt(nums[i]) * weights2[i];
-            let d2 = sum % 11 < 2 ? 0 : 11 - (sum % 11);
-            return parseInt(nums[13]) === d2;
-        },
-        email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
-        phone: (v) => v.replace(/\D/g, '').length >= 10,
-        random: () => true,
-    };
+        const validators = {
+            cpf: (v) => {
+                const nums = v.replace(/\D/g, '');
+                if (nums.length !== 11) return false;
+                if (/^(\d)\1+$/.test(nums)) return false;
+                let sum = 0;
+                for (let i = 0; i < 9; i++) sum += parseInt(nums[i]) * (10 - i);
+                let d1 = 11 - (sum % 11); d1 = d1 >= 10 ? 0 : d1;
+                if (parseInt(nums[9]) !== d1) return false;
+                sum = 0;
+                for (let i = 0; i < 10; i++) sum += parseInt(nums[i]) * (11 - i);
+                let d2 = 11 - (sum % 11); d2 = d2 >= 10 ? 0 : d2;
+                return parseInt(nums[10]) === d2;
+            },
+            cnpj: (v) => {
+                const nums = v.replace(/\D/g, '');
+                if (nums.length !== 14) return false;
+                const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+                const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+                let sum = 0;
+                for (let i = 0; i < 12; i++) sum += parseInt(nums[i]) * weights1[i];
+                let d1 = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+                if (parseInt(nums[12]) !== d1) return false;
+                sum = 0;
+                for (let i = 0; i < 13; i++) sum += parseInt(nums[i]) * weights2[i];
+                let d2 = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+                return parseInt(nums[13]) === d2;
+            },
+            email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+            phone: (v) => v.replace(/\D/g, '').length >= 10,
+            random: () => true,
+        };
 
-    const placeholders = {
-        random: 'Insira a chave aleatória',
-        cpf: '000.000.000-00',
-        cnpj: '00.000.000/0000-00',
-        email: 'exemplo@email.com',
-        phone: '(00) 00000-0000',
-    };
+        const placeholders = {
+            random: 'Insira a chave aleatória',
+            cpf: '000.000.000-00',
+            cnpj: '00.000.000/0000-00',
+            email: 'exemplo@email.com',
+            phone: '(00) 00000-0000',
+        };
 
-    keyType.addEventListener('change', () => {
-        pixKey.value = '';
-        pixKey.placeholder = placeholders[keyType.value];
-        clearFieldError(pixKey);
-    });
+        keyType.addEventListener('change', () => {
+            pixKey.value = '';
+            pixKey.placeholder = placeholders[keyType.value];
+            clearFieldError(pixKey);
+        });
 
-    pixKey.addEventListener('input', () => {
-        const type = keyType.value;
-        if (masks[type]) {
-            pixKey.value = masks[type](pixKey.value);
+        pixKey.addEventListener('input', () => {
+            const type = keyType.value;
+            if (masks[type]) {
+                pixKey.value = masks[type](pixKey.value);
+            }
+            validateField(pixKey, type);
+            triggerPreview();
+        });
+
+        beneficiaryName.addEventListener('input', () => {
+            if (beneficiaryName.value.trim()) clearFieldError(beneficiaryName);
+            triggerPreview();
+        });
+
+        beneficiaryCity.addEventListener('input', triggerPreview);
+        amount.addEventListener('input', triggerPreview);
+
+        // Amount formatting
+        amount.addEventListener('blur', () => {
+            const val = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
+            if (val && !isNaN(parseFloat(val))) {
+                amount.value = parseFloat(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            }
+        });
+
+        amount.addEventListener('focus', () => {
+            const val = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
+            if (val && !isNaN(parseFloat(val))) {
+                amount.value = parseFloat(val).toFixed(2);
+            } else {
+                amount.value = '';
+            }
+        });
+
+        function validateField(input, type) {
+            const val = input.value.trim();
+            if (!val) { clearFieldError(input); return true; }
+            const valid = validators[type] ? validators[type](val) : true;
+            if (!valid) {
+                input.classList.add('input-error');
+                input.classList.remove('input-success');
+                const errorEl = document.getElementById(input.id + 'Error') || input.nextElementSibling;
+                if (errorEl && errorEl.classList.contains('form-error')) errorEl.classList.add('visible');
+            } else {
+                input.classList.remove('input-error');
+                input.classList.add('input-success');
+                const errorEl = document.getElementById(input.id + 'Error') || input.nextElementSibling;
+                if (errorEl && errorEl.classList.contains('form-error')) errorEl.classList.remove('visible');
+            }
+            return valid;
         }
-        validateField(pixKey, type);
-        triggerPreview();
-    });
 
-    beneficiaryName.addEventListener('input', () => {
-        if (beneficiaryName.value.trim()) clearFieldError(beneficiaryName);
-        triggerPreview();
-    });
-
-    beneficiaryCity.addEventListener('input', triggerPreview);
-    amount.addEventListener('input', triggerPreview);
-
-    // Amount formatting
-    amount.addEventListener('blur', () => {
-        const val = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
-        if (val && !isNaN(parseFloat(val))) {
-            amount.value = parseFloat(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        }
-    });
-
-    amount.addEventListener('focus', () => {
-        const val = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
-        if (val && !isNaN(parseFloat(val))) {
-            amount.value = parseFloat(val).toFixed(2);
-        } else {
-            amount.value = '';
-        }
-    });
-
-    function validateField(input, type) {
-        const val = input.value.trim();
-        if (!val) { clearFieldError(input); return true; }
-        const valid = validators[type] ? validators[type](val) : true;
-        if (!valid) {
-            input.classList.add('input-error');
-            input.classList.remove('input-success');
-            const errorEl = document.getElementById(input.id + 'Error') || input.nextElementSibling;
-            if (errorEl && errorEl.classList.contains('form-error')) errorEl.classList.add('visible');
-        } else {
-            input.classList.remove('input-error');
-            input.classList.add('input-success');
+        function clearFieldError(input) {
+            input.classList.remove('input-error', 'input-success');
             const errorEl = document.getElementById(input.id + 'Error') || input.nextElementSibling;
             if (errorEl && errorEl.classList.contains('form-error')) errorEl.classList.remove('visible');
         }
-        return valid;
-    }
 
-    function clearFieldError(input) {
-        input.classList.remove('input-error', 'input-success');
-        const errorEl = document.getElementById(input.id + 'Error') || input.nextElementSibling;
-        if (errorEl && errorEl.classList.contains('form-error')) errorEl.classList.remove('visible');
-    }
-
-    // --- 1B: Prévia em Tempo Real (debounce) ---
-    function triggerPreview() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(async () => {
-            const key = pixKey.value.trim();
-            const name = beneficiaryName.value.trim();
-            const city = beneficiaryCity.value.trim();
-            if (key && name && city) {
-                await generatePix(true);
-            }
-        }, 800);
-    }
-
-    // --- Form Submit ---
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        let hasError = false;
-        if (!pixKey.value.trim()) {
-            pixKey.classList.add('input-error');
-            const err = document.getElementById('pixKeyError');
-            if (err) { err.textContent = 'Chave PIX é obrigatória'; err.classList.add('visible'); }
-            hasError = true;
-        }
-        if (!beneficiaryName.value.trim()) {
-            beneficiaryName.classList.add('input-error');
-            const err = document.getElementById('nameError');
-            if (err) err.classList.add('visible');
-            hasError = true;
-        }
-        if (!validateField(pixKey, keyType.value)) hasError = true;
-
-        if (hasError) return;
-
-        await generatePix(false);
-    });
-
-    // --- Generate PIX ---
-    async function generatePix(isPreview) {
-        if (!isPreview) {
-            submitBtn.classList.add('loading');
-            submitBtn.disabled = true;
+        // --- 1B: Prévia em Tempo Real (debounce) ---
+        function triggerPreview() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(async () => {
+                const key = pixKey.value.trim();
+                const name = beneficiaryName.value.trim();
+                const city = beneficiaryCity.value.trim();
+                if (key && name && city) {
+                    await generatePix(true);
+                }
+            }, 800);
         }
 
-        try {
-            const amountVal = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
-            const body = {
-                pixKey: pixKey.value.replace(/[.\-/() ]/g, ''),
-                beneficiaryName: beneficiaryName.value.trim(),
-                beneficiaryCity: beneficiaryCity.value.trim(),
-                amount: amountVal && !isNaN(parseFloat(amountVal)) ? parseFloat(amountVal) : null,
-                txid: txid.value.trim() || null,
-                type: pixType.value,
-                format: qrFormat.value,
-            };
+        // --- Form Submit ---
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-            const res = await fetch('/api/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || 'Erro ao gerar');
+            let hasError = false;
+            if (!pixKey.value.trim()) {
+                pixKey.classList.add('input-error');
+                const err = document.getElementById('pixKeyError');
+                if (err) { err.textContent = 'Chave PIX é obrigatória'; err.classList.add('visible'); }
+                hasError = true;
             }
-
-            lastGeneratedData = data;
-
-            // Render QR Code
-            if (data.format === 'svg' && data.qrCodeSvg) {
-                qrContainer.innerHTML = data.qrCodeSvg;
-            } else if (data.qrCodeBase64) {
-                qrContainer.innerHTML = `<img src="${data.qrCodeBase64}" alt="QR Code PIX">`;
+            if (!beneficiaryName.value.trim()) {
+                beneficiaryName.classList.add('input-error');
+                const err = document.getElementById('nameError');
+                if (err) err.classList.add('visible');
+                hasError = true;
             }
+            if (!validateField(pixKey, keyType.value)) hasError = true;
 
-            brcodeText.textContent = data.brcode;
-            resultArea.classList.add('visible');
-            placeholder.style.display = 'none';
+            if (hasError) return;
 
-            // Save to history
-            if (!isPreview) {
-                saveToHistory(body);
-            }
-
-        } catch (err) {
-            if (!isPreview) {
-                copyFeedback.textContent = err.message;
-                copyFeedback.style.color = 'var(--error)';
-                setTimeout(() => { copyFeedback.textContent = ''; copyFeedback.style.color = ''; }, 3000);
-            }
-        } finally {
-            if (!isPreview) {
-                submitBtn.classList.remove('loading');
-                submitBtn.disabled = false;
-            }
-        }
-    }
-
-    // --- Copy ---
-    copyBtn.addEventListener('click', () => {
-        const text = brcodeText.textContent;
-        navigator.clipboard.writeText(text).then(() => {
-            copyFeedback.textContent = '✅ Copiado com sucesso!';
-            copyFeedback.style.color = 'var(--success)';
-        }).catch(() => {
-            // Fallback
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
-            copyFeedback.textContent = '✅ Copiado!';
-            copyFeedback.style.color = 'var(--success)';
+            await generatePix(false);
         });
-        setTimeout(() => { copyFeedback.textContent = ''; }, 2000);
-    });
 
-    // --- 1D: Download PNG ---
-    downloadPngBtn.addEventListener('click', async () => {
-        if (!lastGeneratedData) return;
-        let dataUrl;
-        if (lastGeneratedData.qrCodeBase64) {
-            dataUrl = lastGeneratedData.qrCodeBase64;
-        } else {
-            // Regenerate as PNG
-            const amountVal = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
-            const body = {
-                pixKey: pixKey.value.replace(/[.\-/() ]/g, ''),
-                beneficiaryName: beneficiaryName.value.trim(),
-                beneficiaryCity: beneficiaryCity.value.trim(),
-                amount: amountVal && !isNaN(parseFloat(amountVal)) ? parseFloat(amountVal) : null,
-                txid: txid.value.trim() || null,
-                type: pixType.value,
-                format: 'png',
-            };
-            const res = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-            const data = await res.json();
-            dataUrl = data.qrCodeBase64;
-        }
-        if (dataUrl) {
-            const link = document.createElement('a');
-            link.download = 'vimapix-qrcode.png';
-            link.href = dataUrl;
-            link.click();
-        }
-    });
+        // --- Generate PIX ---
+        async function generatePix(isPreview) {
+            if (!isPreview) {
+                submitBtn.classList.add('loading');
+                submitBtn.disabled = true;
+            }
 
-    // --- 1D: Download SVG ---
-    downloadSvgBtn.addEventListener('click', async () => {
-        let svgContent;
-        if (lastGeneratedData && lastGeneratedData.qrCodeSvg) {
-            svgContent = lastGeneratedData.qrCodeSvg;
-        } else {
-            const amountVal = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
-            const body = {
-                pixKey: pixKey.value.replace(/[.\-/() ]/g, ''),
-                beneficiaryName: beneficiaryName.value.trim(),
-                beneficiaryCity: beneficiaryCity.value.trim(),
-                amount: amountVal && !isNaN(parseFloat(amountVal)) ? parseFloat(amountVal) : null,
-                txid: txid.value.trim() || null,
-                type: pixType.value,
-                format: 'svg',
-            };
-            const res = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-            const data = await res.json();
-            svgContent = data.qrCodeSvg;
-        }
-        if (svgContent) {
-            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.download = 'vimapix-qrcode.svg';
-            link.href = url;
-            link.click();
-            URL.revokeObjectURL(url);
-        }
-    });
+            try {
+                const amountVal = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
+                const body = {
+                    pixKey: pixKey.value.replace(/[.\-/() ]/g, ''),
+                    beneficiaryName: beneficiaryName.value.trim(),
+                    beneficiaryCity: beneficiaryCity.value.trim(),
+                    amount: amountVal && !isNaN(parseFloat(amountVal)) ? parseFloat(amountVal) : null,
+                    txid: txid.value.trim() || null,
+                    type: pixType.value,
+                    format: qrFormat.value,
+                };
 
-    // --- 2B: Validate BR Code ---
-    validateBtn.addEventListener('click', async () => {
-        const brcode = validateInput.value.trim();
-        if (!brcode) return;
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
 
-        try {
-            const res = await fetch('/api/validate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ brcode }),
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Erro ao gerar');
+                }
+
+                lastGeneratedData = data;
+
+                // Render QR Code
+                if (data.format === 'svg' && data.qrCodeSvg) {
+                    qrContainer.innerHTML = data.qrCodeSvg;
+                } else if (data.qrCodeBase64) {
+                    qrContainer.innerHTML = `<img src="${data.qrCodeBase64}" alt="QR Code PIX">`;
+                }
+
+                brcodeText.textContent = data.brcode;
+                resultArea.classList.add('visible');
+                placeholder.style.display = 'none';
+
+                // Save to history
+                if (!isPreview) {
+                    saveToHistory(body);
+                }
+
+            } catch (err) {
+                if (!isPreview) {
+                    copyFeedback.textContent = err.message;
+                    copyFeedback.style.color = 'var(--error)';
+                    setTimeout(() => { copyFeedback.textContent = ''; copyFeedback.style.color = ''; }, 3000);
+                }
+            } finally {
+                if (!isPreview) {
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                }
+            }
+        }
+
+        // --- Copy ---
+        copyBtn.addEventListener('click', () => {
+            const text = brcodeText.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                copyFeedback.textContent = '✅ Copiado com sucesso!';
+                copyFeedback.style.color = 'var(--success)';
+            }).catch(() => {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                copyFeedback.textContent = '✅ Copiado!';
+                copyFeedback.style.color = 'var(--success)';
             });
-            const data = await res.json();
+            setTimeout(() => { copyFeedback.textContent = ''; }, 2000);
+        });
 
-            if (!res.ok) throw new Error(data.error);
+        // --- 1D: Download PNG ---
+        downloadPngBtn.addEventListener('click', async () => {
+            if (!lastGeneratedData) return;
+            let dataUrl;
+            if (lastGeneratedData.qrCodeBase64) {
+                dataUrl = lastGeneratedData.qrCodeBase64;
+            } else {
+                // Regenerate as PNG
+                const amountVal = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
+                const body = {
+                    pixKey: pixKey.value.replace(/[.\-/() ]/g, ''),
+                    beneficiaryName: beneficiaryName.value.trim(),
+                    beneficiaryCity: beneficiaryCity.value.trim(),
+                    amount: amountVal && !isNaN(parseFloat(amountVal)) ? parseFloat(amountVal) : null,
+                    txid: txid.value.trim() || null,
+                    type: pixType.value,
+                    format: 'png',
+                };
+                const res = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const data = await res.json();
+                dataUrl = data.qrCodeBase64;
+            }
+            if (dataUrl) {
+                const link = document.createElement('a');
+                link.download = 'vimapix-qrcode.png';
+                link.href = dataUrl;
+                link.click();
+            }
+        });
 
-            const validBadge = data.valid
-                ? '<span class="badge badge-success">✓ Válido</span>'
-                : '<span class="badge badge-error">✗ Inválido</span>';
+        // --- 1D: Download SVG ---
+        downloadSvgBtn.addEventListener('click', async () => {
+            let svgContent;
+            if (lastGeneratedData && lastGeneratedData.qrCodeSvg) {
+                svgContent = lastGeneratedData.qrCodeSvg;
+            } else {
+                const amountVal = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
+                const body = {
+                    pixKey: pixKey.value.replace(/[.\-/() ]/g, ''),
+                    beneficiaryName: beneficiaryName.value.trim(),
+                    beneficiaryCity: beneficiaryCity.value.trim(),
+                    amount: amountVal && !isNaN(parseFloat(amountVal)) ? parseFloat(amountVal) : null,
+                    txid: txid.value.trim() || null,
+                    type: pixType.value,
+                    format: 'svg',
+                };
+                const res = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const data = await res.json();
+                svgContent = data.qrCodeSvg;
+            }
+            if (svgContent) {
+                const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = 'vimapix-qrcode.svg';
+                link.href = url;
+                link.click();
+                URL.revokeObjectURL(url);
+            }
+        });
 
-            validateTable.innerHTML = `
+        // --- 2B: Validate BR Code ---
+        validateBtn.addEventListener('click', async () => {
+            const brcode = validateInput.value.trim();
+            if (!brcode) return;
+
+            try {
+                const res = await fetch('/api/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ brcode }),
+                });
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error);
+
+                const validBadge = data.valid
+                    ? '<span class="badge badge-success">✓ Válido</span>'
+                    : '<span class="badge badge-error">✗ Inválido</span>';
+
+                let valorDisplay;
+                if (data.data.amount) {
+                    valorDisplay = 'R$ ' + data.data.amount;
+                } else if (data.data.type === 'dynamic') {
+                    valorDisplay = '<span style="color: var(--warning);">Definido via URL da cobrança</span>';
+                } else {
+                    valorDisplay = 'Não definido (aberto)';
+                }
+
+                let pixKeyDisplay = data.data.pixKey || '—';
+                let urlRow = '';
+                if (data.data.pixUrl) {
+                    pixKeyDisplay = data.data.pixUrl;
+                    urlRow = `<tr><td>Tipo Chave</td><td>URL de Cobrança (PIX Dinâmico)</td></tr>`;
+                }
+
+                validateTable.innerHTML = `
                 <tr><td>CRC</td><td>${validBadge}</td></tr>
-                <tr><td>Chave PIX</td><td>${data.data.pixKey || '—'}</td></tr>
+                <tr><td>Chave PIX</td><td style="word-break: break-all; font-size: 0.75rem;">${pixKeyDisplay}</td></tr>
+                ${urlRow}
                 <tr><td>Beneficiário</td><td>${data.data.beneficiaryName || '—'}</td></tr>
                 <tr><td>Cidade</td><td>${data.data.beneficiaryCity || '—'}</td></tr>
-                <tr><td>Valor</td><td>${data.data.amount ? 'R$ ' + data.data.amount : 'Não definido'}</td></tr>
+                <tr><td>Valor</td><td>${valorDisplay}</td></tr>
                 <tr><td>TXID</td><td>${data.data.txid || '—'}</td></tr>
-                <tr><td>Tipo</td><td>${data.data.type === 'dynamic' ? 'Dinâmico' : 'Estático'}</td></tr>
+                <tr><td>Tipo</td><td>${data.data.type === 'dynamic' ? '⚡ Dinâmico' : '📌 Estático'}</td></tr>
                 <tr><td>Moeda</td><td>${data.data.transactionCurrency || '—'}</td></tr>
             `;
-            validateResult.classList.add('visible');
+                validateResult.classList.add('visible');
 
-        } catch (err) {
-            validateTable.innerHTML = `<tr><td colspan="2" style="color: var(--error); text-align: center;">${err.message}</td></tr>`;
-            validateResult.classList.add('visible');
+            } catch (err) {
+                validateTable.innerHTML = `<tr><td colspan="2" style="color: var(--error); text-align: center;">${err.message}</td></tr>`;
+                validateResult.classList.add('visible');
+            }
+        });
+
+        // --- 1E: Histórico Local ---
+        function getHistory() {
+            try {
+                return JSON.parse(localStorage.getItem('vimapix_history') || '[]');
+            } catch { return []; }
         }
-    });
 
-    // --- 1E: Histórico Local ---
-    function getHistory() {
-        try {
-            return JSON.parse(localStorage.getItem('vimapix_history') || '[]');
-        } catch { return []; }
-    }
-
-    function saveToHistory(data) {
-        const history = getHistory();
-        const item = {
-            pixKey: data.pixKey,
-            name: data.beneficiaryName,
-            city: data.beneficiaryCity,
-            amount: data.amount,
-            txid: data.txid,
-            type: data.type,
-            timestamp: new Date().toLocaleString('pt-BR'),
-        };
-        // Remove duplicates by key
-        const filtered = history.filter(h => h.pixKey !== item.pixKey);
-        filtered.unshift(item);
-        // Keep max 10
-        const trimmed = filtered.slice(0, 10);
-        localStorage.setItem('vimapix_history', JSON.stringify(trimmed));
-        renderHistory();
-    }
-
-    function renderHistory() {
-        const history = getHistory();
-        if (history.length === 0) {
-            historyList.innerHTML = '<li class="history-empty">Nenhum PIX gerado ainda</li>';
-            return;
+        function saveToHistory(data) {
+            const history = getHistory();
+            const item = {
+                pixKey: data.pixKey,
+                name: data.beneficiaryName,
+                city: data.beneficiaryCity,
+                amount: data.amount,
+                txid: data.txid,
+                type: data.type,
+                timestamp: new Date().toLocaleString('pt-BR'),
+            };
+            // Remove duplicates by key
+            const filtered = history.filter(h => h.pixKey !== item.pixKey);
+            filtered.unshift(item);
+            // Keep max 10
+            const trimmed = filtered.slice(0, 10);
+            localStorage.setItem('vimapix_history', JSON.stringify(trimmed));
+            renderHistory();
         }
-        historyList.innerHTML = history.map((h, i) => `
+
+        function renderHistory() {
+            const history = getHistory();
+            if (history.length === 0) {
+                historyList.innerHTML = '<li class="history-empty">Nenhum PIX gerado ainda</li>';
+                return;
+            }
+            historyList.innerHTML = history.map((h, i) => `
             <li class="history-item" data-index="${i}">
                 <span class="history-item__key">${h.pixKey}</span>
                 <span class="history-item__meta">${h.amount ? 'R$ ' + parseFloat(h.amount).toFixed(2) : 'Sem valor'}</span>
             </li>
         `).join('');
 
-        // Click to restore
-        historyList.querySelectorAll('.history-item').forEach(el => {
-            el.addEventListener('click', () => {
-                const idx = parseInt(el.dataset.index);
-                const h = history[idx];
-                if (h) {
-                    pixKey.value = h.pixKey;
-                    beneficiaryName.value = h.name;
-                    beneficiaryCity.value = h.city;
-                    amount.value = h.amount ? parseFloat(h.amount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '';
-                    txid.value = h.txid || '';
-                    pixType.value = h.type || 'static';
-                    triggerPreview();
-                }
+            // Click to restore
+            historyList.querySelectorAll('.history-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const idx = parseInt(el.dataset.index);
+                    const h = history[idx];
+                    if (h) {
+                        pixKey.value = h.pixKey;
+                        beneficiaryName.value = h.name;
+                        beneficiaryCity.value = h.city;
+                        amount.value = h.amount ? parseFloat(h.amount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '';
+                        txid.value = h.txid || '';
+                        pixType.value = h.type || 'static';
+                        triggerPreview();
+                    }
+                });
             });
+        }
+
+        clearHistory.addEventListener('click', () => {
+            localStorage.removeItem('vimapix_history');
+            renderHistory();
         });
-    }
 
-    clearHistory.addEventListener('click', () => {
-        localStorage.removeItem('vimapix_history');
+        // Initialize
         renderHistory();
-    });
-
-    // Initialize
-    renderHistory();
     </script>
 </body>
+
 </html>

@@ -106,6 +106,7 @@ const parseBRCode = (brcode) => {
     while (i < brcode.length - 4) { // -4 para ignorar CRC
         const id = brcode.substring(i, i + 2);
         const len = parseInt(brcode.substring(i + 2, i + 4), 10);
+        if (isNaN(len) || len < 0 || i + 4 + len > brcode.length) break;
         const value = brcode.substring(i + 4, i + 4 + len);
         fields[id] = value;
         i += 4 + len;
@@ -113,14 +114,17 @@ const parseBRCode = (brcode) => {
 
     // Extrai sub-campos do Merchant Account Info (campo 26)
     let pixKey = null;
+    let pixUrl = null;
     if (fields['26']) {
         let j = 0;
         const mai = fields['26'];
         while (j < mai.length) {
             const subId = mai.substring(j, j + 2);
             const subLen = parseInt(mai.substring(j + 2, j + 4), 10);
+            if (isNaN(subLen) || subLen < 0 || j + 4 + subLen > mai.length) break;
             const subValue = mai.substring(j + 4, j + 4 + subLen);
-            if (subId === '01') pixKey = subValue;
+            if (subId === '01') pixKey = subValue;  // Chave PIX (estático)
+            if (subId === '25') pixUrl = subValue;  // URL da cobrança (dinâmico)
             j += 4 + subLen;
         }
     }
@@ -133,15 +137,22 @@ const parseBRCode = (brcode) => {
         while (j < ad.length) {
             const subId = ad.substring(j, j + 2);
             const subLen = parseInt(ad.substring(j + 2, j + 4), 10);
+            if (isNaN(subLen) || subLen < 0 || j + 4 + subLen > ad.length) break;
             const subValue = ad.substring(j + 4, j + 4 + subLen);
             if (subId === '05') txid = subValue;
             j += 4 + subLen;
         }
     }
 
+    // Detecção de tipo: campo 01 ("11"=estático, "12"=dinâmico) ou presença de URL
+    const pointOfInitiation = fields['01'] || null;
+    const isDynamic = pointOfInitiation === '12' || !!pixUrl;
+
     return {
         formatIndicator: fields['00'],
-        pixKey,
+        pointOfInitiation,
+        pixKey: pixKey || pixUrl || null,
+        pixUrl,
         merchantCategoryCode: fields['52'],
         transactionCurrency: fields['53'] === '986' ? 'BRL' : fields['53'],
         amount: fields['54'] || null,
@@ -149,7 +160,7 @@ const parseBRCode = (brcode) => {
         beneficiaryName: fields['59'],
         beneficiaryCity: fields['60'],
         txid,
-        type: fields['54'] ? 'dynamic' : 'static',
+        type: isDynamic ? 'dynamic' : 'static',
         crc: brcode.substring(brcode.length - 4),
     };
 };
@@ -215,15 +226,15 @@ app.post('/api/generate', async (req, res) => {
         const additionalDataField = formatField('62', txidField);
 
         let payload = '000201' +
-                      merchantAccountInfo +
-                      merchantCategoryCode +
-                      transactionCurrency +
-                      amountField +
-                      countryCode +
-                      beneficiaryNameField +
-                      beneficiaryCityField +
-                      additionalDataField +
-                      '6304';
+            merchantAccountInfo +
+            merchantCategoryCode +
+            transactionCurrency +
+            amountField +
+            countryCode +
+            beneficiaryNameField +
+            beneficiaryCityField +
+            additionalDataField +
+            '6304';
 
         const finalPayload = payload + crc16(payload);
 
@@ -306,15 +317,19 @@ const swaggerSpec = {
                 responses: {
                     '200': {
                         description: 'Status do servidor',
-                        content: { 'application/json': { schema: {
-                            type: 'object',
-                            properties: {
-                                status: { type: 'string', example: 'ok' },
-                                version: { type: 'string', example: '1.2.0' },
-                                uptime: { type: 'string', example: '3600s' },
-                                timestamp: { type: 'string', example: '2026-03-02T18:00:00.000Z' },
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        status: { type: 'string', example: 'ok' },
+                                        version: { type: 'string', example: '1.2.0' },
+                                        uptime: { type: 'string', example: '3600s' },
+                                        timestamp: { type: 'string', example: '2026-03-02T18:00:00.000Z' },
+                                    }
+                                }
                             }
-                        }}}
+                        }
                     }
                 }
             }
@@ -325,19 +340,23 @@ const swaggerSpec = {
                 tags: ['PIX'],
                 requestBody: {
                     required: true,
-                    content: { 'application/json': { schema: {
-                        type: 'object',
-                        required: ['pixKey', 'beneficiaryName', 'beneficiaryCity'],
-                        properties: {
-                            pixKey: { type: 'string', description: 'Chave PIX', example: 'teste@email.com' },
-                            beneficiaryName: { type: 'string', description: 'Nome do beneficiário', example: 'FULANO DE TAL' },
-                            beneficiaryCity: { type: 'string', description: 'Cidade do beneficiário', example: 'SAO PAULO' },
-                            amount: { type: 'number', description: 'Valor (opcional)', example: 19.99 },
-                            txid: { type: 'string', description: 'ID da transação (opcional)', example: 'PEDIDO123' },
-                            type: { type: 'string', enum: ['static', 'dynamic'], description: 'Tipo de PIX', example: 'static' },
-                            format: { type: 'string', enum: ['png', 'svg'], description: 'Formato do QR Code', example: 'png' },
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'object',
+                                required: ['pixKey', 'beneficiaryName', 'beneficiaryCity'],
+                                properties: {
+                                    pixKey: { type: 'string', description: 'Chave PIX', example: 'teste@email.com' },
+                                    beneficiaryName: { type: 'string', description: 'Nome do beneficiário', example: 'FULANO DE TAL' },
+                                    beneficiaryCity: { type: 'string', description: 'Cidade do beneficiário', example: 'SAO PAULO' },
+                                    amount: { type: 'number', description: 'Valor (opcional)', example: 19.99 },
+                                    txid: { type: 'string', description: 'ID da transação (opcional)', example: 'PEDIDO123' },
+                                    type: { type: 'string', enum: ['static', 'dynamic'], description: 'Tipo de PIX', example: 'static' },
+                                    format: { type: 'string', enum: ['png', 'svg'], description: 'Formato do QR Code', example: 'png' },
+                                }
+                            }
                         }
-                    }}}
+                    }
                 },
                 responses: {
                     '200': { description: 'QR Code gerado com sucesso' },
@@ -353,13 +372,17 @@ const swaggerSpec = {
                 tags: ['PIX'],
                 requestBody: {
                     required: true,
-                    content: { 'application/json': { schema: {
-                        type: 'object',
-                        required: ['brcode'],
-                        properties: {
-                            brcode: { type: 'string', description: 'Payload BR Code completo', example: '00020126...' },
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'object',
+                                required: ['brcode'],
+                                properties: {
+                                    brcode: { type: 'string', description: 'Payload BR Code completo', example: '00020126...' },
+                                }
+                            }
                         }
-                    }}}
+                    }
                 },
                 responses: {
                     '200': { description: 'BR Code decodificado' },
