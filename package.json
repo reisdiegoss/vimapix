@@ -1,5 +1,5 @@
 {
-  "name": "builderpix-api",
+  "name": "vimapix-api",
   "version": "1.1.0",
   "description": "API para gerar BR Codes de PIX com frontend.",
   "main": "server.js",

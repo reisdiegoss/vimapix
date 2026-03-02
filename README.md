@@ -1,22 +1,22 @@
-# BuilderPIX - Gerador de QR Code e Payload PIX
+# VimaPIX - Gerador de QR Code e Payload PIX
 
 <p align="center">
   <!-- Badges -->
-  <a href="https://github.com/reisdiegoss/builderpix">
-    <img src="https://img.shields.io/github/stars/reisdiegoss/builderpix?style=for-the-badge&logo=github&label=Stars" alt="GitHub Stars">
+  <a href="https://github.com/reisdiegoss/vimapix">
+    <img src="https://img.shields.io/github/stars/reisdiegoss/vimapix?style=for-the-badge&logo=github&label=Stars" alt="GitHub Stars">
   </a>
-  <a href="https://hub.docker.com/r/builderapi/builderpix">
-    <img src="https://img.shields.io/docker/pulls/builderapi/builderpix?style=for-the-badge&logo=docker&label=Pulls" alt="Docker Pulls">
+  <a href="https://hub.docker.com/r/vimapix/vimapix">
+    <img src="https://img.shields.io/docker/pulls/vimapix/vimapix?style=for-the-badge&logo=docker&label=Pulls" alt="Docker Pulls">
   </a>
-  <a href="https://github.com/reisdiegoss/builderpix/blob/main/LICENSE">
+  <a href="https://github.com/reisdiegoss/vimapix/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="Licença: MIT">
   </a>
-  <a href="https://builderpix.builderapi.com.br">
+  <a href="https://vimapix.dominio.com.br">
     <img src="https://img.shields.io/badge/Site-Acessar-blue?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Acessar o Site">
   </a>
 </p>
 
-**BuilderPIX** é uma aplicação Node.js completa que oferece uma interface web e uma API RESTful para gerar dinamicamente QR Codes e payloads "Copia e Cola" para transações PIX, seguindo as especificações do Banco Central do Brasil.
+**VimaPIX** é uma aplicação Node.js completa que oferece uma interface web e uma API RESTful para gerar dinamicamente QR Codes e payloads "Copia e Cola" para transações PIX, seguindo as especificações do Banco Central do Brasil.
 
 ---
 
@@ -42,8 +42,8 @@
 
 Primeiro, clone o repositório:
 ```bash
-git clone [https://github.com/reisdiegoss/builderpix.git](https://github.com/reisdiegoss/builderpix.git)
-cd builderpix
+git clone [https://github.com/reisdiegoss/vimapix.git](https://github.com/reisdiegoss/vimapix.git)
+cd VimaPIX
 ```
 
 Instale as dependências:
@@ -62,7 +62,7 @@ A aplicação estará disponível em `http://localhost:3000`.
 Para rodar a aplicação de forma simples usando a imagem do Docker Hub:
 
 ```bash
-docker run -d -p 3000:3000 --name builderpix builderapi/builderpix:latest
+docker run -d -p 3000:3000 --name VimaPIX vimapix/vimapix:latest
 ```
 Após executar o comando, acesse `http://localhost:3000` no seu navegador.
 
@@ -76,9 +76,9 @@ Crie um arquivo `docker-stack.yml` com o conteúdo abaixo:
 version: "3.8"
 
 services:
-  builderpix:
-    image: builderapi/builderpix:latest
-    hostname: builderpix
+  VimaPIX:
+    image: vimapix/vimapix:latest
+    hostname: VimaPIX
     networks:
       - network_public
     deploy:
@@ -96,14 +96,14 @@ services:
         - "traefik.enable=true"
         - "traefik.docker.network=network_public"
         # Roteador HTTP para o domínio
-        - "traefik.http.routers.builderpix.rule=Host(`builderpix.dominio.com.br`)"
-        - "traefik.http.routers.builderpix.entrypoints=websecure"
-        - "traefik.http.routers.builderpix.service=builderpix-svc"
+        - "traefik.http.routers.VimaPIX.rule=Host(`VimaPIX.dominio.com.br`)"
+        - "traefik.http.routers.VimaPIX.entrypoints=websecure"
+        - "traefik.http.routers.VimaPIX.service=VimaPIX-svc"
         # Configurações de TLS/SSL com Let's Encrypt
-        - "traefik.http.routers.builderpix.tls=true"
-        - "traefik.http.routers.builderpix.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.VimaPIX.tls=true"
+        - "traefik.http.routers.VimaPIX.tls.certresolver=letsencryptresolver"
         # Definição do serviço e porta da aplicação
-        - "traefik.http.services.builderpix-svc.loadbalancer.server.port=3000"
+        - "traefik.http.services.VimaPIX-svc.loadbalancer.server.port=3000"
 
 networks:
   network_public:
@@ -113,13 +113,13 @@ networks:
 **Pré-requisitos para o Swarm:**
 - Você precisa ter uma instância do Traefik rodando e conectada à rede `network_public`.
 - A rede `network_public` deve ser do tipo `overlay` e ter sido criada previamente.
-- Altere `builderpix.dominio.com.br` para o seu domínio real.
+- Altere `VimaPIX.dominio.com.br` para o seu domínio real.
 
 Para implantar a stack, execute:
 ```bash
-docker stack deploy -c docker-stack.yml builderpix
+docker stack deploy -c docker-stack.yml VimaPIX
 ```
-Após a implantação, acesse `https://builderpix.dominio.com.br` no seu navegador.
+Após a implantação, acesse `https://VimaPIX.dominio.com.br` no seu navegador.
 
 ---
 
@@ -132,7 +132,7 @@ Gera o BR Code e o QR Code em Base64.
 
 **Exemplo de requisição com `curl`:**
 ```bash
-curl -X POST [https://builderpix.dominio.com.br/api/generate](https://builderpix.dominio.com.br/api/generate) \
+curl -X POST [https://VimaPIX.dominio.com.br/api/generate](https://VimaPIX.dominio.com.br/api/generate) \
 -H "Content-Type: application/json" \
 -d '{
   "pixKey": "seu-email@provedor.com",

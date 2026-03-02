@@ -1,9 +1,9 @@
 version: "3.8"
 
 services:
-  builderpix:
-    image: builderapi/builderpix:latest
-    hostname: builderpix
+  vimapix:
+    image: vimasistemas/vimapix:latest
+    hostname: vimapix
     networks:
       - network_public
     deploy:
@@ -21,14 +21,14 @@ services:
         - "traefik.enable=true"
         - "traefik.docker.network=network_public"
         # Roteador HTTP para o domínio
-        - "traefik.http.routers.builderpix.rule=Host(`builderpix.dominio.com.br`)"
-        - "traefik.http.routers.builderpix.entrypoints=websecure"
-        - "traefik.http.routers.builderpix.service=builderpix-svc"
+        - "traefik.http.routers.vimapix.rule=Host(`vimapix.dominio.com.br`)"
+        - "traefik.http.routers.vimapix.entrypoints=websecure"
+        - "traefik.http.routers.vimapix.service=vimapix-svc"
         # Configurações de TLS/SSL com Let's Encrypt
-        - "traefik.http.routers.builderpix.tls=true"
-        - "traefik.http.routers.builderpix.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.vimapix.tls=true"
+        - "traefik.http.routers.vimapix.tls.certresolver=letsencryptresolver"
         # Definição do serviço e porta da aplicação
-        - "traefik.http.services.builderpix-svc.loadbalancer.server.port=3000"
+        - "traefik.http.services.vimapix-svc.loadbalancer.server.port=3000"
 
 networks:
   network_public:
