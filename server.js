@@ -21,6 +21,9 @@ const APP_VERSION = require('./package.json').version;
 
 // --- Middlewares de Segurança ---
 
+// Trust proxy (necessário para rate limiting atrás de Traefik/Nginx)
+app.set('trust proxy', 1);
+
 // 3C - Helmet: headers HTTP de segurança
 app.use(helmet({
     contentSecurityPolicy: {
