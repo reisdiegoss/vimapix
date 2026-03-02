@@ -1,7 +1,6 @@
 # VimaPIX - Gerador de QR Code e Payload PIX
 
 <p align="center">
-  <!-- Badges -->
   <a href="https://github.com/reisdiegoss/vimapix">
     <img src="https://img.shields.io/github/stars/reisdiegoss/vimapix?style=for-the-badge&logo=github&label=Stars" alt="GitHub Stars">
   </a>
@@ -11,23 +10,44 @@
   <a href="https://github.com/reisdiegoss/vimapix/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="Licença: MIT">
   </a>
-  <a href="https://vimapix.dominio.com.br">
-    <img src="https://img.shields.io/badge/Site-Acessar-blue?style=for-the-badge&logo=google-chrome&logoColor=white" alt="Acessar o Site">
-  </a>
 </p>
 
-**VimaPIX** é uma aplicação Node.js completa que oferece uma interface web e uma API RESTful para gerar dinamicamente QR Codes e payloads "Copia e Cola" para transações PIX, seguindo as especificações do Banco Central do Brasil.
+**VimaPIX** é uma aplicação Node.js completa que oferece uma interface web moderna e uma API RESTful para gerar e validar QR Codes e payloads "Copia e Cola" para transações PIX, seguindo as especificações do Banco Central do Brasil.
+
+---
+
+## 🎬 Demonstração
+
+<p align="center">
+  <img src="assets/redesign_test_1772486961528.webp" alt="Demonstração do VimaPIX" width="800">
+</p>
 
 ---
 
 ## 🚀 Funcionalidades
 
-- **Interface Web Intuitiva:** Um frontend simples para preencher os dados e gerar o PIX visualmente.
-- **API RESTful Robusta:** Um endpoint `/api/generate` para integrações, permitindo que outros sistemas gerem códigos PIX.
-- **Geração de QR Code:** Retorna a imagem do QR Code em formato Base64.
-- **Payload "Copia e Cola":** Retorna o payload (BR Code) completo para transações.
-- **Sem Dependências Externas:** A lógica de geração do PIX é totalmente contida na aplicação.
-- **Pronto para Orquestração:** Inclui exemplos para rodar com Docker Swarm e Traefik como proxy reverso.
+### Interface Web
+
+- **Dark Mode Premium:** Design moderno com glassmorphism, gradientes e micro-animações
+- **Validação em Tempo Real:** Máscaras automáticas para CPF, CNPJ, E-mail e Celular
+- **Prévia Instantânea:** QR Code gerado automaticamente conforme você digita
+- **Download PNG/SVG:** Baixe o QR Code em formato de imagem ou vetorial
+- **Histórico Local:** Últimas 10 chaves geradas salvas no navegador para reutilização rápida
+- **Validador de BR Code:** Cole um payload PIX e veja os dados decodificados
+
+### API RESTful
+
+- **Geração de QR Code** (`POST /api/generate`): Retorna QR Code em PNG (Base64) ou SVG
+- **Validação de BR Code** (`POST /api/validate`): Decodifica e valida payloads PIX (parser EMV + CRC)
+- **Health Check** (`GET /health`): Status, versão e uptime do servidor
+- **Documentação Interativa** (`/docs`): Swagger UI com todos os endpoints
+- **PIX Estático e Dinâmico:** Suporte completo aos dois tipos de transação
+
+### Segurança
+
+- **Rate Limiting:** 100 requisições por IP a cada 15 minutos
+- **Helmet:** Headers HTTP de segurança configurados
+- **Validação com Zod:** Schemas de validação em todas as rotas
 
 ---
 
@@ -38,24 +58,12 @@
 - [Node.js](https://nodejs.org/) (v18 ou superior)
 - [Docker](https://www.docker.com/) (para rodar em contêiner)
 
-### 2. Rodando Localmente (Para Desenvolvimento)
-
-Primeiro, clone o repositório:
+### 2. Rodando Localmente
 
 ```bash
 git clone https://github.com/reisdiegoss/vimapix.git
 cd vimapix
-```
-
-Instale as dependências:
-
-```bash
 npm install
-```
-
-Inicie o servidor de desenvolvimento:
-
-```bash
 npm start
 ```
 
@@ -63,19 +71,13 @@ A aplicação estará disponível em `http://localhost:3000`.
 
 ### 3. Executando com Docker
 
-Para rodar a aplicação de forma simples usando a imagem do Docker Hub:
-
 ```bash
 docker run -d -p 3000:3000 --name vimapix vimasistemas/vimapix:latest
 ```
 
-Após executar o comando, acesse `http://localhost:3000` no seu navegador.
+### 4. Docker Swarm + Traefik (Produção)
 
-### 4. Executando com Docker Swarm e Traefik
-
-Esta é a forma recomendada para ambientes de produção, utilizando o Traefik como proxy reverso para gerenciar o tráfego e os certificados SSL.
-
-Crie um arquivo `docker-stack.yml` com o conteúdo abaixo:
+Crie um arquivo `docker-stack.yml`:
 
 ```yaml
 version: "3.8"
@@ -97,17 +99,13 @@ services:
           cpus: '0.5'
           memory: 1024M
       labels:
-        # --- Configurações do Traefik ---
         - "traefik.enable=true"
         - "traefik.docker.network=network_public"
-        # Roteador HTTP para o domínio
         - "traefik.http.routers.vimapix.rule=Host(`vimapix.dominio.com.br`)"
         - "traefik.http.routers.vimapix.entrypoints=websecure"
         - "traefik.http.routers.vimapix.service=vimapix-svc"
-        # Configurações de TLS/SSL com Let's Encrypt
         - "traefik.http.routers.vimapix.tls=true"
         - "traefik.http.routers.vimapix.tls.certresolver=letsencryptresolver"
-        # Definição do serviço e porta da aplicação
         - "traefik.http.services.vimapix-svc.loadbalancer.server.port=3000"
 
 networks:
@@ -115,68 +113,82 @@ networks:
     external: true
 ```
 
-**Pré-requisitos para o Swarm:**
-
-- Você precisa ter uma instância do Traefik rodando e conectada à rede `network_public`.
-- A rede `network_public` deve ser do tipo `overlay` e ter sido criada previamente.
-- Altere `vimapix.dominio.com.br` para o seu domínio real.
-
-Para implantar a stack, execute:
-
 ```bash
 docker stack deploy -c docker-stack.yml vimapix
 ```
 
-Após a implantação, acesse `https://vimapix.dominio.com.br` no seu navegador.
+> **Nota:** Altere `vimapix.dominio.com.br` para o seu domínio real.
 
 ---
 
-## 📡 API Endpoint
+## 📡 API Endpoints
 
-A aplicação expõe um endpoint principal para a geração do PIX.
+A documentação completa e interativa está disponível em `/docs` (Swagger UI).
 
-### `POST /api/generate`
+### `GET /health`
 
-Gera o BR Code e o QR Code em Base64.
-
-**Exemplo de requisição com `curl`:**
-
-```bash
-curl -X POST https://vimapix.dominio.com.br/api/generate \
--H "Content-Type: application/json" \
--d '{
-  "pixKey": "seu-email@provedor.com",
-  "beneficiaryName": "NOME COMPLETO DO BENEFICIARIO",
-  "beneficiaryCity": "SAO PAULO",
-  "amount": 19.99,
-  "txid": "PEDIDO12345"
-}'
-```
-
-**Exemplo de resposta (Sucesso `200 OK`):**
+Retorna o status do servidor.
 
 ```json
 {
-  "brcode": "00020126580014BR.GOV.BCB.PIX...",
-  "qrCodeBase64": "data:image/png;base64,iVBORw0KGgoAAA..."
+  "status": "ok",
+  "version": "2.0.0",
+  "uptime": "3600s",
+  "timestamp": "2026-03-02T18:00:00.000Z"
 }
+```
+
+### `POST /api/generate`
+
+Gera o BR Code e o QR Code.
+
+```bash
+curl -X POST http://localhost:3000/api/generate \
+-H "Content-Type: application/json" \
+-d '{
+  "pixKey": "seu-email@provedor.com",
+  "beneficiaryName": "NOME COMPLETO",
+  "beneficiaryCity": "SAO PAULO",
+  "amount": 19.99,
+  "txid": "PEDIDO12345",
+  "type": "static",
+  "format": "png"
+}'
+```
+
+| Campo | Tipo | Obrigatório | Descrição |
+|---|---|---|---|
+| `pixKey` | string | ✅ | Chave PIX |
+| `beneficiaryName` | string | ✅ | Nome do beneficiário |
+| `beneficiaryCity` | string | ✅ | Cidade do beneficiário |
+| `amount` | number | ❌ | Valor da transação |
+| `txid` | string | ❌ | Identificador da transação |
+| `type` | string | ❌ | `static` ou `dynamic` (padrão: `static`) |
+| `format` | string | ❌ | `png` ou `svg` (padrão: `png`) |
+
+### `POST /api/validate`
+
+Valida e decodifica um payload BR Code.
+
+```bash
+curl -X POST http://localhost:3000/api/validate \
+-H "Content-Type: application/json" \
+-d '{"brcode": "00020126..."}'
 ```
 
 ---
 
 ## 🐳 Dockerfile
 
-A imagem é construída utilizando um processo multi-stage para otimização, resultando em uma imagem final leve e segura.
+Imagem otimizada com multi-stage build:
 
 ```dockerfile
-# Etapa 1: Base da Construção
 FROM node:18-alpine AS builder
 WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install --only=production
 COPY . .
 
-# Etapa 2: Imagem Final de Produção
 FROM node:18-alpine
 WORKDIR /usr/src/app
 COPY --from=builder /usr/src/app .

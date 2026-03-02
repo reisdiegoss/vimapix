@@ -3,187 +3,597 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VimaPIX - Gerador gratuito de QR Code e Payload PIX. Gere, valide e baixe QR Codes para transações PIX.">
     <title>VimaPIX - Gerador de QR Code PIX</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .transition-all { transition: all 0.3s ease-in-out; }
-        .btn-loading { cursor: not-allowed; opacity: 0.7; }
-        .uppercase-input { text-transform: uppercase; }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body>
+    <div class="app-container">
 
-    <div class="w-full max-w-md mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
-        <div class="p-6 md:p-8">
-            <div class="text-center mb-6">
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-800">VimaPIX</h1>
-                <p class="text-gray-500 mt-1">Gerador de QR Code PIX Gratuito</p>
+        <!-- Header -->
+        <header class="header">
+            <div class="header__logo">
+                <div class="header__icon">⚡</div>
+                <h1 class="header__title">VimaPIX</h1>
+            </div>
+            <p class="header__subtitle">Gerador de QR Code PIX Gratuito</p>
+        </header>
+
+        <!-- Main Grid -->
+        <main class="main-grid">
+
+            <!-- Left Column: Form -->
+            <div class="card" style="animation-delay: 0.1s">
+                <h2 class="card__title">
+                    <span class="card__title-icon">📋</span>
+                    Dados do PIX
+                </h2>
+
+                <form id="pixForm" novalidate>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="keyType">Tipo de Chave</label>
+                            <select class="form-select" id="keyType">
+                                <option value="random">Aleatória</option>
+                                <option value="cpf">CPF</option>
+                                <option value="cnpj">CNPJ</option>
+                                <option value="email">E-mail</option>
+                                <option value="phone">Celular</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pixType">Tipo de PIX</label>
+                            <select class="form-select" id="pixType">
+                                <option value="static">Estático</option>
+                                <option value="dynamic">Dinâmico</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="pixKey">Chave PIX</label>
+                        <input class="form-input" type="text" id="pixKey" placeholder="Insira a chave aqui" required>
+                        <p class="form-error" id="pixKeyError">Chave PIX inválida</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="beneficiaryName">Nome do Beneficiário</label>
+                        <input class="form-input" type="text" id="beneficiaryName" placeholder="SEU NOME COMPLETO" style="text-transform: uppercase" required>
+                        <p class="form-error" id="nameError">Nome é obrigatório</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="beneficiaryCity">Cidade do Beneficiário</label>
+                        <input class="form-input" type="text" id="beneficiaryCity" placeholder="SAO PAULO" value="SAO PAULO" style="text-transform: uppercase" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="amount">Valor (Opcional)</label>
+                            <input class="form-input" type="text" id="amount" placeholder="R$ 0,00" inputmode="decimal">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="txid">TXID (Opcional)</label>
+                            <input class="form-input" type="text" id="txid" placeholder="Código da transferência" maxlength="25">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="qrFormat">Formato do QR</label>
+                            <select class="form-select" id="qrFormat">
+                                <option value="png">PNG (Imagem)</option>
+                                <option value="svg">SVG (Vetorial)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button class="btn btn-primary" type="submit" id="submitBtn">
+                                <span class="spinner"></span>
+                                <span class="btn-text">⚡ Gerar QR Code</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- History Panel -->
+                <div class="history-panel" id="historyPanel">
+                    <div class="history-panel__header">
+                        <span class="history-panel__title">📜 Histórico Recente</span>
+                        <button class="history-panel__clear" id="clearHistory">Limpar</button>
+                    </div>
+                    <ul class="history-list" id="historyList">
+                        <li class="history-empty">Nenhum PIX gerado ainda</li>
+                    </ul>
+                </div>
             </div>
 
-            <form id="pixForm" class="space-y-4">
-                <div>
-                    <label for="pixKeyType" class="block text-sm font-medium text-gray-700">Tipo de Chave PIX</label>
-                    <select id="pixKeyType" class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                        <option value="aleatoria">Aleatória</option>
-                        <option value="cpf">CPF</option>
-                        <option value="cnpj">CNPJ</option>
-                        <option value="celular">Celular</option>
-                        <option value="email">E-mail</option>
-                    </select>
+            <!-- Right Column: Result + Validate -->
+            <div class="card" style="animation-delay: 0.2s">
+                <h2 class="card__title">
+                    <span class="card__title-icon">📱</span>
+                    QR Code Gerado
+                </h2>
+
+                <!-- Result Area -->
+                <div class="result-area" id="resultArea">
+                    <div class="qr-container" id="qrContainer">
+                        <!-- QR Code will be inserted here -->
+                    </div>
+
+                    <div class="brcode-container">
+                        <div class="brcode-label">Payload Copia e Cola</div>
+                        <div class="brcode-text" id="brcodeText"></div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-secondary btn-sm" id="copyBtn">📋 Copiar</button>
+                        <button class="btn btn-secondary btn-sm" id="downloadPngBtn">📥 PNG</button>
+                        <button class="btn btn-secondary btn-sm" id="downloadSvgBtn">📥 SVG</button>
+                    </div>
+                    <p class="copy-feedback" id="copyFeedback"></p>
                 </div>
 
-                <div>
-                    <label for="pixKey" class="block text-sm font-medium text-gray-700">Chave PIX</label>
-                    <input type="text" id="pixKey" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Insira a chave aqui">
+                <!-- Placeholder when no result -->
+                <div id="placeholder" style="text-align: center; padding: 3rem 1rem;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.3;">📱</div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Preencha os dados e clique em<br><strong>"Gerar QR Code"</strong> para visualizar</p>
                 </div>
 
-                <div>
-                    <label for="beneficiaryName" class="block text-sm font-medium text-gray-700">Nome do Beneficiário</label>
-                    <input type="text" id="beneficiaryName" required class="uppercase-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="SEU NOME COMPLETO">
+                <!-- Validate Section -->
+                <div class="validate-section">
+                    <h3 class="card__title" style="font-size: 0.95rem;">
+                        <span class="card__title-icon">🔍</span>
+                        Validar BR Code
+                    </h3>
+                    <div class="form-group">
+                        <textarea class="form-input" id="validateInput" rows="3" placeholder="Cole aqui um payload BR Code para validar..." style="resize: vertical; font-family: 'Courier New', monospace; font-size: 0.8rem;"></textarea>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="validateBtn" style="width: 100%;">🔍 Validar</button>
+
+                    <div class="validate-result" id="validateResult">
+                        <table class="validate-table" id="validateTable"></table>
+                    </div>
                 </div>
-
-                <div>
-                    <label for="beneficiaryCity" class="block text-sm font-medium text-gray-700">Cidade do Beneficiário</label>
-                    <input type="text" id="beneficiaryCity" required class="uppercase-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="SAO PAULO">
-                </div>
-
-                <div>
-                    <label for="amount" class="block text-sm font-medium text-gray-700">Valor (Opcional)</label>
-                    <input type="text" id="amount" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="R$ 0,00">
-                </div>
-
-                <div>
-                    <label for="txid" class="block text-sm font-medium text-gray-700">Código da Transferência (Opcional)</label>
-                    <input type="text" id="txid" class="uppercase-input mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="DEIXE EM BRANCO OU USE UM CÓDIGO">
-                </div>
-
-                <button type="submit" id="submitButton" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
-                    Gerar QR Code
-                </button>
-                 <p id="errorFeedback" class="text-center text-red-600 font-medium text-sm mt-2 h-4"></p>
-            </form>
-        </div>
-
-        <div id="resultSection" class="hidden bg-gray-50 p-6 md:p-8 border-t border-gray-200">
-            <h2 class="text-xl font-semibold text-center text-gray-800 mb-4">Seu PIX está pronto!</h2>
-            <div class="flex justify-center mb-4 p-4 bg-white rounded-lg shadow-inner">
-                <img id="qrcodeImage" alt="QR Code PIX" class="hidden">
             </div>
-            <div class="relative">
-                <label for="pixCopyPaste" class="block text-sm font-medium text-gray-700 mb-1">PIX Copia e Cola</label>
-                <textarea id="pixCopyPaste" readonly class="w-full p-2 border border-gray-300 rounded-md bg-gray-100 text-xs text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="4"></textarea>
-                <button id="copyButton" class="absolute top-7 right-2 bg-indigo-500 text-white px-3 py-1 rounded-md text-xs font-semibold hover:bg-indigo-600 transition-all">
-                    Copiar
-                </button>
-            </div>
-            <p id="copyFeedback" class="text-center text-green-600 font-medium text-sm mt-2 h-4"></p>
-        </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p class="footer__text">
+                VimaPIX &mdash; <a class="footer__link" href="/docs" target="_blank">📖 API Docs</a>
+                &nbsp;|&nbsp;
+                <a class="footer__link" href="https://github.com/reisdiegoss/vimapix" target="_blank">GitHub</a>
+            </p>
+        </footer>
     </div>
 
     <script>
-        // --- Elementos do DOM ---
-        const pixForm = document.getElementById('pixForm');
-        const submitButton = document.getElementById('submitButton');
-        const errorFeedback = document.getElementById('errorFeedback');
-        const resultSection = document.getElementById('resultSection');
-        const qrcodeImage = document.getElementById('qrcodeImage');
-        const pixCopyPasteTextarea = document.getElementById('pixCopyPaste');
-        const copyButton = document.getElementById('copyButton');
-        const copyFeedback = document.getElementById('copyFeedback');
-        const nameInput = document.getElementById('beneficiaryName');
-        const cityInput = document.getElementById('beneficiaryCity');
-        const amountInput = document.getElementById('amount');
-        const txidInput = document.getElementById('txid');
+    // === VimaPIX Frontend Logic ===
 
-        // --- Lógica de Formatação dos Inputs ---
-        nameInput.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); });
-        cityInput.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); });
-        txidInput.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); });
+    // --- DOM Elements ---
+    const form = document.getElementById('pixForm');
+    const keyType = document.getElementById('keyType');
+    const pixType = document.getElementById('pixType');
+    const pixKey = document.getElementById('pixKey');
+    const beneficiaryName = document.getElementById('beneficiaryName');
+    const beneficiaryCity = document.getElementById('beneficiaryCity');
+    const amount = document.getElementById('amount');
+    const txid = document.getElementById('txid');
+    const qrFormat = document.getElementById('qrFormat');
+    const submitBtn = document.getElementById('submitBtn');
+    const resultArea = document.getElementById('resultArea');
+    const placeholder = document.getElementById('placeholder');
+    const qrContainer = document.getElementById('qrContainer');
+    const brcodeText = document.getElementById('brcodeText');
+    const copyBtn = document.getElementById('copyBtn');
+    const copyFeedback = document.getElementById('copyFeedback');
+    const downloadPngBtn = document.getElementById('downloadPngBtn');
+    const downloadSvgBtn = document.getElementById('downloadSvgBtn');
+    const validateInput = document.getElementById('validateInput');
+    const validateBtn = document.getElementById('validateBtn');
+    const validateResult = document.getElementById('validateResult');
+    const validateTable = document.getElementById('validateTable');
+    const historyList = document.getElementById('historyList');
+    const clearHistory = document.getElementById('clearHistory');
 
-        amountInput.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value === '') {
-                e.target.value = '';
-                return;
+    let lastGeneratedData = null;
+    let debounceTimer = null;
+
+    // --- 1C: Validação e Máscaras ---
+    const masks = {
+        cpf: (v) => v.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2').substring(0, 14),
+        cnpj: (v) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1/$2').replace(/(\d{4})(\d{1,2})$/, '$1-$2').substring(0, 18),
+        phone: (v) => v.replace(/\D/g, '').replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d{1,4})$/, '$1-$2').substring(0, 15),
+    };
+
+    const validators = {
+        cpf: (v) => {
+            const nums = v.replace(/\D/g, '');
+            if (nums.length !== 11) return false;
+            if (/^(\d)\1+$/.test(nums)) return false;
+            let sum = 0;
+            for (let i = 0; i < 9; i++) sum += parseInt(nums[i]) * (10 - i);
+            let d1 = 11 - (sum % 11); d1 = d1 >= 10 ? 0 : d1;
+            if (parseInt(nums[9]) !== d1) return false;
+            sum = 0;
+            for (let i = 0; i < 10; i++) sum += parseInt(nums[i]) * (11 - i);
+            let d2 = 11 - (sum % 11); d2 = d2 >= 10 ? 0 : d2;
+            return parseInt(nums[10]) === d2;
+        },
+        cnpj: (v) => {
+            const nums = v.replace(/\D/g, '');
+            if (nums.length !== 14) return false;
+            const weights1 = [5,4,3,2,9,8,7,6,5,4,3,2];
+            const weights2 = [6,5,4,3,2,9,8,7,6,5,4,3,2];
+            let sum = 0;
+            for (let i = 0; i < 12; i++) sum += parseInt(nums[i]) * weights1[i];
+            let d1 = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+            if (parseInt(nums[12]) !== d1) return false;
+            sum = 0;
+            for (let i = 0; i < 13; i++) sum += parseInt(nums[i]) * weights2[i];
+            let d2 = sum % 11 < 2 ? 0 : 11 - (sum % 11);
+            return parseInt(nums[13]) === d2;
+        },
+        email: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+        phone: (v) => v.replace(/\D/g, '').length >= 10,
+        random: () => true,
+    };
+
+    const placeholders = {
+        random: 'Insira a chave aleatória',
+        cpf: '000.000.000-00',
+        cnpj: '00.000.000/0000-00',
+        email: 'exemplo@email.com',
+        phone: '(00) 00000-0000',
+    };
+
+    keyType.addEventListener('change', () => {
+        pixKey.value = '';
+        pixKey.placeholder = placeholders[keyType.value];
+        clearFieldError(pixKey);
+    });
+
+    pixKey.addEventListener('input', () => {
+        const type = keyType.value;
+        if (masks[type]) {
+            pixKey.value = masks[type](pixKey.value);
+        }
+        validateField(pixKey, type);
+        triggerPreview();
+    });
+
+    beneficiaryName.addEventListener('input', () => {
+        if (beneficiaryName.value.trim()) clearFieldError(beneficiaryName);
+        triggerPreview();
+    });
+
+    beneficiaryCity.addEventListener('input', triggerPreview);
+    amount.addEventListener('input', triggerPreview);
+
+    // Amount formatting
+    amount.addEventListener('blur', () => {
+        const val = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
+        if (val && !isNaN(parseFloat(val))) {
+            amount.value = parseFloat(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+    });
+
+    amount.addEventListener('focus', () => {
+        const val = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
+        if (val && !isNaN(parseFloat(val))) {
+            amount.value = parseFloat(val).toFixed(2);
+        } else {
+            amount.value = '';
+        }
+    });
+
+    function validateField(input, type) {
+        const val = input.value.trim();
+        if (!val) { clearFieldError(input); return true; }
+        const valid = validators[type] ? validators[type](val) : true;
+        if (!valid) {
+            input.classList.add('input-error');
+            input.classList.remove('input-success');
+            const errorEl = document.getElementById(input.id + 'Error') || input.nextElementSibling;
+            if (errorEl && errorEl.classList.contains('form-error')) errorEl.classList.add('visible');
+        } else {
+            input.classList.remove('input-error');
+            input.classList.add('input-success');
+            const errorEl = document.getElementById(input.id + 'Error') || input.nextElementSibling;
+            if (errorEl && errorEl.classList.contains('form-error')) errorEl.classList.remove('visible');
+        }
+        return valid;
+    }
+
+    function clearFieldError(input) {
+        input.classList.remove('input-error', 'input-success');
+        const errorEl = document.getElementById(input.id + 'Error') || input.nextElementSibling;
+        if (errorEl && errorEl.classList.contains('form-error')) errorEl.classList.remove('visible');
+    }
+
+    // --- 1B: Prévia em Tempo Real (debounce) ---
+    function triggerPreview() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+            const key = pixKey.value.trim();
+            const name = beneficiaryName.value.trim();
+            const city = beneficiaryCity.value.trim();
+            if (key && name && city) {
+                await generatePix(true);
             }
-            value = (parseInt(value, 10) / 100).toFixed(2);
-            e.target.value = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-        });
+        }, 800);
+    }
 
-        // --- Lógica de Submissão do Formulário ---
-        pixForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            // UI: Limpar resultados e erros anteriores
-            copyFeedback.textContent = '';
-            errorFeedback.textContent = '';
-            resultSection.classList.add('hidden');
-            qrcodeImage.classList.add('hidden');
-            qrcodeImage.src = '';
+    // --- Form Submit ---
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-            submitButton.disabled = true;
-            submitButton.classList.add('btn-loading');
-            submitButton.textContent = 'Gerando...';
+        let hasError = false;
+        if (!pixKey.value.trim()) {
+            pixKey.classList.add('input-error');
+            const err = document.getElementById('pixKeyError');
+            if (err) { err.textContent = 'Chave PIX é obrigatória'; err.classList.add('visible'); }
+            hasError = true;
+        }
+        if (!beneficiaryName.value.trim()) {
+            beneficiaryName.classList.add('input-error');
+            const err = document.getElementById('nameError');
+            if (err) err.classList.add('visible');
+            hasError = true;
+        }
+        if (!validateField(pixKey, keyType.value)) hasError = true;
 
-            // Coletar dados do formulário
-            const rawAmount = amountInput.value.replace(/\D/g, '');
-            const amount = rawAmount ? (parseInt(rawAmount, 10) / 100) : null;
+        if (hasError) return;
 
-            const formData = {
-                pixKey: document.getElementById('pixKey').value,
-                beneficiaryName: nameInput.value,
-                beneficiaryCity: cityInput.value,
-                amount: amount,
-                txid: txidInput.value,
+        await generatePix(false);
+    });
+
+    // --- Generate PIX ---
+    async function generatePix(isPreview) {
+        if (!isPreview) {
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+        }
+
+        try {
+            const amountVal = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
+            const body = {
+                pixKey: pixKey.value.replace(/[.\-/() ]/g, ''),
+                beneficiaryName: beneficiaryName.value.trim(),
+                beneficiaryCity: beneficiaryCity.value.trim(),
+                amount: amountVal && !isNaN(parseFloat(amountVal)) ? parseFloat(amountVal) : null,
+                txid: txid.value.trim() || null,
+                type: pixType.value,
+                format: qrFormat.value,
             };
 
-            try {
-                const response = await fetch('/api/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData),
-                });
+            const res = await fetch('/api/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
 
-                const result = await response.json();
+            const data = await res.json();
 
-                if (!response.ok) {
-                    throw new Error(result.error || 'Falha ao gerar o código.');
+            if (!res.ok) {
+                throw new Error(data.error || 'Erro ao gerar');
+            }
+
+            lastGeneratedData = data;
+
+            // Render QR Code
+            if (data.format === 'svg' && data.qrCodeSvg) {
+                qrContainer.innerHTML = data.qrCodeSvg;
+            } else if (data.qrCodeBase64) {
+                qrContainer.innerHTML = `<img src="${data.qrCodeBase64}" alt="QR Code PIX">`;
+            }
+
+            brcodeText.textContent = data.brcode;
+            resultArea.classList.add('visible');
+            placeholder.style.display = 'none';
+
+            // Save to history
+            if (!isPreview) {
+                saveToHistory(body);
+            }
+
+        } catch (err) {
+            if (!isPreview) {
+                copyFeedback.textContent = err.message;
+                copyFeedback.style.color = 'var(--error)';
+                setTimeout(() => { copyFeedback.textContent = ''; copyFeedback.style.color = ''; }, 3000);
+            }
+        } finally {
+            if (!isPreview) {
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+            }
+        }
+    }
+
+    // --- Copy ---
+    copyBtn.addEventListener('click', () => {
+        const text = brcodeText.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            copyFeedback.textContent = '✅ Copiado com sucesso!';
+            copyFeedback.style.color = 'var(--success)';
+        }).catch(() => {
+            // Fallback
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            copyFeedback.textContent = '✅ Copiado!';
+            copyFeedback.style.color = 'var(--success)';
+        });
+        setTimeout(() => { copyFeedback.textContent = ''; }, 2000);
+    });
+
+    // --- 1D: Download PNG ---
+    downloadPngBtn.addEventListener('click', async () => {
+        if (!lastGeneratedData) return;
+        let dataUrl;
+        if (lastGeneratedData.qrCodeBase64) {
+            dataUrl = lastGeneratedData.qrCodeBase64;
+        } else {
+            // Regenerate as PNG
+            const amountVal = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
+            const body = {
+                pixKey: pixKey.value.replace(/[.\-/() ]/g, ''),
+                beneficiaryName: beneficiaryName.value.trim(),
+                beneficiaryCity: beneficiaryCity.value.trim(),
+                amount: amountVal && !isNaN(parseFloat(amountVal)) ? parseFloat(amountVal) : null,
+                txid: txid.value.trim() || null,
+                type: pixType.value,
+                format: 'png',
+            };
+            const res = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const data = await res.json();
+            dataUrl = data.qrCodeBase64;
+        }
+        if (dataUrl) {
+            const link = document.createElement('a');
+            link.download = 'vimapix-qrcode.png';
+            link.href = dataUrl;
+            link.click();
+        }
+    });
+
+    // --- 1D: Download SVG ---
+    downloadSvgBtn.addEventListener('click', async () => {
+        let svgContent;
+        if (lastGeneratedData && lastGeneratedData.qrCodeSvg) {
+            svgContent = lastGeneratedData.qrCodeSvg;
+        } else {
+            const amountVal = amount.value.replace(/[^\d.,]/g, '').replace(',', '.');
+            const body = {
+                pixKey: pixKey.value.replace(/[.\-/() ]/g, ''),
+                beneficiaryName: beneficiaryName.value.trim(),
+                beneficiaryCity: beneficiaryCity.value.trim(),
+                amount: amountVal && !isNaN(parseFloat(amountVal)) ? parseFloat(amountVal) : null,
+                txid: txid.value.trim() || null,
+                type: pixType.value,
+                format: 'svg',
+            };
+            const res = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const data = await res.json();
+            svgContent = data.qrCodeSvg;
+        }
+        if (svgContent) {
+            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = 'vimapix-qrcode.svg';
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+    });
+
+    // --- 2B: Validate BR Code ---
+    validateBtn.addEventListener('click', async () => {
+        const brcode = validateInput.value.trim();
+        if (!brcode) return;
+
+        try {
+            const res = await fetch('/api/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ brcode }),
+            });
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error);
+
+            const validBadge = data.valid
+                ? '<span class="badge badge-success">✓ Válido</span>'
+                : '<span class="badge badge-error">✗ Inválido</span>';
+
+            validateTable.innerHTML = `
+                <tr><td>CRC</td><td>${validBadge}</td></tr>
+                <tr><td>Chave PIX</td><td>${data.data.pixKey || '—'}</td></tr>
+                <tr><td>Beneficiário</td><td>${data.data.beneficiaryName || '—'}</td></tr>
+                <tr><td>Cidade</td><td>${data.data.beneficiaryCity || '—'}</td></tr>
+                <tr><td>Valor</td><td>${data.data.amount ? 'R$ ' + data.data.amount : 'Não definido'}</td></tr>
+                <tr><td>TXID</td><td>${data.data.txid || '—'}</td></tr>
+                <tr><td>Tipo</td><td>${data.data.type === 'dynamic' ? 'Dinâmico' : 'Estático'}</td></tr>
+                <tr><td>Moeda</td><td>${data.data.transactionCurrency || '—'}</td></tr>
+            `;
+            validateResult.classList.add('visible');
+
+        } catch (err) {
+            validateTable.innerHTML = `<tr><td colspan="2" style="color: var(--error); text-align: center;">${err.message}</td></tr>`;
+            validateResult.classList.add('visible');
+        }
+    });
+
+    // --- 1E: Histórico Local ---
+    function getHistory() {
+        try {
+            return JSON.parse(localStorage.getItem('vimapix_history') || '[]');
+        } catch { return []; }
+    }
+
+    function saveToHistory(data) {
+        const history = getHistory();
+        const item = {
+            pixKey: data.pixKey,
+            name: data.beneficiaryName,
+            city: data.beneficiaryCity,
+            amount: data.amount,
+            txid: data.txid,
+            type: data.type,
+            timestamp: new Date().toLocaleString('pt-BR'),
+        };
+        // Remove duplicates by key
+        const filtered = history.filter(h => h.pixKey !== item.pixKey);
+        filtered.unshift(item);
+        // Keep max 10
+        const trimmed = filtered.slice(0, 10);
+        localStorage.setItem('vimapix_history', JSON.stringify(trimmed));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const history = getHistory();
+        if (history.length === 0) {
+            historyList.innerHTML = '<li class="history-empty">Nenhum PIX gerado ainda</li>';
+            return;
+        }
+        historyList.innerHTML = history.map((h, i) => `
+            <li class="history-item" data-index="${i}">
+                <span class="history-item__key">${h.pixKey}</span>
+                <span class="history-item__meta">${h.amount ? 'R$ ' + parseFloat(h.amount).toFixed(2) : 'Sem valor'}</span>
+            </li>
+        `).join('');
+
+        // Click to restore
+        historyList.querySelectorAll('.history-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const idx = parseInt(el.dataset.index);
+                const h = history[idx];
+                if (h) {
+                    pixKey.value = h.pixKey;
+                    beneficiaryName.value = h.name;
+                    beneficiaryCity.value = h.city;
+                    amount.value = h.amount ? parseFloat(h.amount).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '';
+                    txid.value = h.txid || '';
+                    pixType.value = h.type || 'static';
+                    triggerPreview();
                 }
-                
-                // Sucesso: Mostrar os resultados
-                const { brcode, qrCodeBase64 } = result;
-                pixCopyPasteTextarea.value = brcode;
-                qrcodeImage.src = qrCodeBase64;
-                qrcodeImage.classList.remove('hidden');
-                
-                resultSection.classList.remove('hidden');
-                resultSection.scrollIntoView({ behavior: 'smooth' });
-
-            } catch (error) {
-                errorFeedback.textContent = error.message;
-                console.error('Erro na chamada da API:', error);
-            } finally {
-                submitButton.disabled = false;
-                submitButton.classList.remove('btn-loading');
-                submitButton.textContent = 'Gerar QR Code';
-            }
+            });
         });
+    }
 
-        // --- Lógica do Botão de Copiar ---
-        copyButton.addEventListener('click', () => {
-            pixCopyPasteTextarea.select();
-            try {
-                document.execCommand('copy');
-                copyFeedback.textContent = 'Copiado com sucesso!';
-                setTimeout(() => { copyFeedback.textContent = ''; }, 2000);
-            } catch (err) {
-                copyFeedback.textContent = 'Falha ao copiar.';
-            }
-        });
+    clearHistory.addEventListener('click', () => {
+        localStorage.removeItem('vimapix_history');
+        renderHistory();
+    });
+
+    // Initialize
+    renderHistory();
     </script>
 </body>
 </html>
